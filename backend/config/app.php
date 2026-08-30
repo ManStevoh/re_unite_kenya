@@ -123,4 +123,13 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Deployment System Keys
+    |--------------------------------------------------------------------------
+    */
+
+    'deploy_secret' => env('DEPLOY_SECRET'),
+    'deploy_agent_key' => env('DEPLOY_AGENT_KEY'),
+
 ];

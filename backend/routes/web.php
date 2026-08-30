@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\OperationsAdminController;
 use App\Http\Controllers\Admin\PeopleAdminController;
 use App\Http\Controllers\Admin\ReportAdminController;
 use App\Http\Controllers\Admin\SystemAdminController;
+use App\Http\Controllers\AgentDeployController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PublicWebController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,10 @@ Route::get('/search', [PublicWebController::class, 'search']);
 Route::get('/items/{report}', [PublicWebController::class, 'teaser']);
 Route::get('/p/{slug}', [PublicWebController::class, 'cms']);
 Route::get('/media/{media}', [MediaController::class, 'show'])->name('media.show')->middleware('signed');
+
+// Autonomous Agent Deploy System
+Route::get('/deploy', [AgentDeployController::class, 'webConsole'])->name('deploy.console');
+Route::post('/deploy/agent', [AgentDeployController::class, 'deploy'])->name('deploy.agent');
 
 Route::prefix('admin')->group(function () {
     Route::middleware('guest')->group(function () {
