@@ -34,10 +34,11 @@ class AgentDeployController extends Controller
             ], 422);
         }
 
-        // 3. Concurrency Lock Handling (Auto-expire after 10 mins)
+        // 3. Concurrency Lock Handling (Auto-expire after 10 mins or force parameter)
         $lockFile = storage_path('framework/deploy.lock');
+        $force = (bool) $request->input('force', false);
         if (file_exists($lockFile)) {
-            if (time() - filemtime($lockFile) < 600) {
+            if (!$force && (time() - filemtime($lockFile) < 600)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Conflict: A deployment is currently in progress.',
@@ -49,7 +50,8 @@ class AgentDeployController extends Controller
 
         // 4. Stream Deployment Progress via Server-Sent Events (SSE)
         return new StreamedResponse(function () use ($branch, $lockFile) {
-            $startTime = microtime(true);
+            try {
+                $startTime = microtime(true);
 
             // Disable output buffering for live streaming
             while (ob_get_level() > 0) {
@@ -193,7 +195,10 @@ class AgentDeployController extends Controller
                 }
             }
 
-            @unlink($lockFile);
+            } finally {
+                @unlink($lockFile);
+            }
+
             $duration = round(microtime(true) - $startTime, 2);
             $sendEvent('log', ['line' => "✅ [SUCCESS] Deployment completed in {$duration}s!"]);
             $sendEvent('done', [
