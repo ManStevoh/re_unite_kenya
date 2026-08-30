@@ -214,9 +214,4 @@ class AgentDeployController extends Controller
             'X-Accel-Buffering' => 'no', // For Nginx / LiteSpeed reverse proxy flush
         ]);
     }
-
-    public function webConsole(Request $request)
-    {
-        return view('deploy.console');
-    }
 }

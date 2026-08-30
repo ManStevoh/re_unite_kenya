@@ -19,8 +19,7 @@ Route::get('/items/{report}', [PublicWebController::class, 'teaser']);
 Route::get('/p/{slug}', [PublicWebController::class, 'cms']);
 Route::get('/media/{media}', [MediaController::class, 'show'])->name('media.show')->middleware('signed');
 
-// Autonomous Agent Deploy System
-Route::get('/deploy', [AgentDeployController::class, 'webConsole'])->name('deploy.console');
+// Autonomous Agent Deploy System (Agent-Only Endpoint)
 Route::post('/deploy/agent', [AgentDeployController::class, 'deploy'])->name('deploy.agent');
 
 Route::prefix('admin')->group(function () {
