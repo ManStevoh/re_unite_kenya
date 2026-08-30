@@ -17,9 +17,11 @@ mobile/.env
 mobile/.env.dart
 
 # Dependencies & build
+*.zip
+*.tar.gz
 backend/vendor/
 backend/node_modules/
-backend/public/build/
+# backend/public/build/ (tracked for zero-node cPanel deployment)
 backend/public/hot
 backend/storage/logs/*
 backend/storage/framework/cache/*
