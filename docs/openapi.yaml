@@ -1,0 +1,450 @@
+openapi: 3.0.3
+info:
+  title: Reunite API
+  version: 1.0.0
+  description: Lost-and-found recovery network. Public responses are teasers only.
+servers:
+  - url: http://127.0.0.1:8000/api/v1
+    description: Local
+tags:
+  - name: Auth
+  - name: Me
+  - name: Catalog
+  - name: Reports
+  - name: Claims
+  - name: Chat
+  - name: Handovers
+  - name: Notifications
+  - name: Search
+  - name: Tags
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, password_confirmation, terms]
+              properties:
+                name: { type: string }
+                display_name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 10 }
+                password_confirmation: { type: string }
+                city: { type: string }
+                terms: { type: boolean }
+      responses:
+        '201': { description: Created }
+        '422': { description: Validation error }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+                device_name: { type: string }
+      responses:
+        '200': { description: Token pair + user }
+        '422': { description: Invalid credentials }
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotate refresh token
+      responses:
+        '200': { description: New tokens }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      summary: Revoke current token
+      responses:
+        '204': { description: Logged out }
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Send reset link
+      responses:
+        '200': { description: Accepted }
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password
+      responses:
+        '200': { description: Reset }
+  /auth/email/verify:
+    post:
+      tags: [Auth]
+      summary: Verify email
+      responses:
+        '200': { description: Verified }
+  /auth/phone/otp/send:
+    post:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      summary: Send phone OTP
+      responses:
+        '200': { description: Sent }
+  /auth/phone/otp/confirm:
+    post:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      summary: Confirm phone OTP
+      responses:
+        '200': { description: Confirmed }
+  /me:
+    get:
+      tags: [Me]
+      security: [{ bearerAuth: [] }]
+      summary: Current user
+      responses:
+        '200': { description: User DTO }
+    patch:
+      tags: [Me]
+      security: [{ bearerAuth: [] }]
+      summary: Update profile
+      responses:
+        '200': { description: User DTO }
+  /me/devices:
+    get:
+      tags: [Me]
+      security: [{ bearerAuth: [] }]
+      summary: List devices
+      responses:
+        '200': { description: Device list }
+  /me/devices/{id}:
+    delete:
+      tags: [Me]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Revoked }
+  /me/notification-preferences:
+    get:
+      tags: [Me]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Preferences }
+    patch:
+      tags: [Me]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Preferences }
+  /me/data-export:
+    post:
+      tags: [Me]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '202': { description: Queued }
+  /me/deactivate:
+    post:
+      tags: [Me]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Deactivated }
+  /me/delete:
+    post:
+      tags: [Me]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Deletion scheduled }
+  /categories:
+    get:
+      tags: [Catalog]
+      summary: Category tree + form schema
+      responses:
+        '200': { description: Categories }
+  /hubs:
+    get:
+      tags: [Catalog]
+      summary: Public hubs
+      responses:
+        '200': { description: Hub list }
+  /hubs/{id}:
+    get:
+      tags: [Catalog]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Hub }
+  /cms/{slug}:
+    get:
+      tags: [Catalog]
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: CMS page }
+  /reports:
+    get:
+      tags: [Reports]
+      summary: Search teasers
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string, enum: [lost, found] }
+        - in: query
+          name: category_id
+          schema: { type: integer }
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        '200': { description: Paginated teasers }
+    post:
+      tags: [Reports]
+      security: [{ bearerAuth: [] }]
+      summary: Create draft report
+      responses:
+        '201': { description: Created }
+  /reports/{id}:
+    get:
+      tags: [Reports]
+      summary: Teaser or full DTO by policy
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Report }
+    patch:
+      tags: [Reports]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Updated }
+  /reports/{id}/submit:
+    post:
+      tags: [Reports]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Submitted }
+  /reports/{id}/close:
+    post:
+      tags: [Reports]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Closed }
+  /reports/{id}/matches:
+    get:
+      tags: [Reports]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Match candidates }
+  /reports/{id}/media:
+    post:
+      tags: [Reports]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '201': { description: Uploaded }
+  /claims:
+    post:
+      tags: [Claims]
+      security: [{ bearerAuth: [] }]
+      summary: Start a claim
+      responses:
+        '201': { description: Created }
+  /claims/{id}:
+    get:
+      tags: [Claims]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Claim }
+  /claims/{id}/answers:
+    post:
+      tags: [Claims]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Recorded }
+  /claims/{id}/evidence:
+    post:
+      tags: [Claims]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '201': { description: Uploaded }
+  /claims/{id}/withdraw:
+    post:
+      tags: [Claims]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Withdrawn }
+  /conversations:
+    get:
+      tags: [Chat]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Threads }
+  /conversations/{id}/messages:
+    get:
+      tags: [Chat]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Messages }
+    post:
+      tags: [Chat]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '201': { description: Sent }
+  /handovers:
+    post:
+      tags: [Handovers]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Created }
+  /handovers/{id}/confirm:
+    post:
+      tags: [Handovers]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Confirmed }
+  /notifications:
+    get:
+      tags: [Notifications]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Inbox }
+  /notifications/{id}/read:
+    post:
+      tags: [Notifications]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Read }
+  /flags:
+    post:
+      tags: [Reports]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Flagged }
+  /search:
+    get:
+      tags: [Search]
+      summary: Unified search (teasers)
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        '200': { description: Results }
+  /tags/{code}:
+    get:
+      tags: [Tags]
+      summary: Resolve QR tag (Phase 2)
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Tag + notify owner path }
+  /tips:
+    post:
+      tags: [Handovers]
+      security: [{ bearerAuth: [] }]
+      summary: Thank-you tip stub (Phase 2)
+      responses:
+        '201': { description: Recorded }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+  schemas:
+    Teaser:
+      type: object
+      description: Public card. Never includes serial, hidden_notes, exact coordinates, or contact.
+      properties:
+        id: { type: integer }
+        type: { type: string, enum: [lost, found] }
+        title: { type: string }
+        category: { type: string }
+        color: { type: string }
+        area: { type: string }
+        occurred_on: { type: string, format: date }
+        thumbnail: { type: string, nullable: true }
+        hub_name: { type: string, nullable: true }

@@ -1,0 +1,44 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../js/**/*.{vue,ts,js}';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --color-ink: #0f4c5c;
+    --color-ink-dark: #0a3540;
+    --color-coral: #e07a5f;
+    --color-coral-dark: #c45c42;
+    --color-sand: #f6f1eb;
+    --color-mist: #e8eef0;
+    --color-paper: #fffdf9;
+}
+
+body {
+    font-family: var(--font-sans);
+}
+
+.btn {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition;
+}
+
+.btn-primary {
+    @apply bg-ink text-white hover:bg-ink-dark;
+}
+
+.btn-accent {
+    @apply bg-coral text-white hover:bg-coral-dark;
+}
+
+.btn-ghost {
+    @apply border border-mist bg-white text-ink hover:bg-sand;
+}
+
+.input {
+    @apply w-full rounded-lg border border-mist bg-white px-3 py-2 text-sm text-ink outline-none focus:border-ink;
+}
+
+.badge {
+    @apply inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize;
+}

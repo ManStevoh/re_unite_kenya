@@ -1,0 +1,39 @@
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+backend/.env
+mobile/.env
+mobile/.env.dart
+
+# Dependencies & build
+backend/vendor/
+backend/node_modules/
+backend/public/build/
+backend/public/hot
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*.php
+!backend/bootstrap/cache/.gitignore
+backend/database/database.sqlite
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+
+# Tests / coverage
+coverage/
+*.iml
