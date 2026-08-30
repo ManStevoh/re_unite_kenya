@@ -2,23 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Deploy\DeployAuthService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AgentDeployController extends Controller
 {
+    public function __construct(
+        private readonly DeployAuthService $authService,
+    ) {}
+
     public function deploy(Request $request)
     {
-        // 1. Authenticate Request (Timing-Safe Comparison)
-        $configuredKey = (string) (config('app.deploy_secret') ?? env('DEPLOY_SECRET', ''));
-        $agentKey = (string) (config('app.deploy_agent_key') ?? env('DEPLOY_AGENT_KEY', $configuredKey));
-
-        $providedKey = (string) ($request->header('X-Deploy-Agent-Key')
+        // 1. Authenticate Request (Timing-Safe Comparison via DeployAuthService)
+        $providedKey = (string) (
+            $request->header('X-Deploy-Agent-Key')
             ?? $request->input('key')
             ?? $request->bearerToken()
-            ?? '');
+            ?? ''
+        );
 
-        if ($configuredKey === '' || $providedKey === '' || (!hash_equals($configuredKey, $providedKey) && !hash_equals($agentKey, $providedKey))) {
+        if (! $this->authService->validateAgentKey($providedKey)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized: Invalid or missing deployment key.',

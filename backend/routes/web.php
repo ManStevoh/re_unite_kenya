@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\SystemAdminController;
 use App\Http\Controllers\AgentDeployController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PublicWebController;
+use App\Http\Controllers\Web\AgentLogController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicWebController::class, 'home']);
@@ -19,8 +20,11 @@ Route::get('/items/{report}', [PublicWebController::class, 'teaser']);
 Route::get('/p/{slug}', [PublicWebController::class, 'cms']);
 Route::get('/media/{media}', [MediaController::class, 'show'])->name('media.show')->middleware('signed');
 
-// Autonomous Agent Deploy System (Agent-Only Endpoint)
+// Autonomous Agent Deploy & Inspection System (Agent-Only Endpoints)
 Route::post('/deploy/agent', [AgentDeployController::class, 'deploy'])->name('deploy.agent');
+Route::match(['get', 'post'], '/logs/agent', [AgentLogController::class, 'handle'])
+    ->name('logs.agent')
+    ->middleware('throttle:60,1');
 
 Route::prefix('admin')->group(function () {
     Route::middleware('guest')->group(function () {

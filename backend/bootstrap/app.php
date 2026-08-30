@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'deploy/agent',
             'deploy/*',
+            'logs/agent',
         ]);
 
         $middleware->web(append: [
