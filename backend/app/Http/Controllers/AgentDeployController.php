@@ -52,8 +52,22 @@ class AgentDeployController extends Controller
         }
         @file_put_contents($lockFile, (string) time());
 
-        // 4. Stream Deployment Progress via Server-Sent Events (SSE)
-        return new StreamedResponse(function () use ($branch, $lockFile) {
+        // 4. Capture Caller Metadata (IP & Agent Name)
+        $clientIp = (string) (
+            $request->header('CF-Connecting-IP')
+            ?: explode(',', (string) $request->header('X-Forwarded-For'))[0]
+            ?: $request->ip()
+            ?: '127.0.0.1'
+        );
+        $agentName = (string) (
+            $request->header('X-Deploy-Agent-Name')
+            ?: $request->input('agent')
+            ?: $request->header('User-Agent')
+            ?: 'Autonomous Agent'
+        );
+
+        // 5. Stream Deployment Progress via Server-Sent Events (SSE)
+        return new StreamedResponse(function () use ($branch, $lockFile, $clientIp, $agentName) {
             try {
                 $startTime = microtime(true);
 
@@ -204,12 +218,34 @@ class AgentDeployController extends Controller
             }
 
             $duration = round(microtime(true) - $startTime, 2);
-            $sendEvent('log', ['line' => "✅ [SUCCESS] Deployment completed in {$duration}s!"]);
+            $sendEvent('log', ['line' => "✅ [SUCCESS] Deployment of [{$branch}] by [{$agentName}] ({$clientIp}) completed in {$duration}s!"]);
+
+            // 6. Record Audit Trail in storage/logs/deploy.log
+            $logEntry = [
+                'timestamp'        => now()->toIso8601String(),
+                'channel'          => 'deploy',
+                'level'            => 'INFO',
+                'status'           => 'SUCCESS',
+                'branch'           => $branch,
+                'agent'            => $agentName,
+                'ip'               => $clientIp,
+                'duration_seconds' => $duration,
+                'message'          => "Deployment of branch [{$branch}] triggered by [{$agentName}] from IP [{$clientIp}] completed in {$duration}s",
+            ];
+            @file_put_contents(
+                storage_path('logs/deploy.log'),
+                json_encode($logEntry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n",
+                FILE_APPEND | LOCK_EX
+            );
+
             $sendEvent('done', [
-                'success' => true,
-                'status' => 'complete',
+                'success'  => true,
+                'status'   => 'complete',
                 'duration' => $duration,
-                'message' => 'Agent deployment completed successfully.',
+                'branch'   => $branch,
+                'agent'    => $agentName,
+                'ip'       => $clientIp,
+                'message'  => 'Agent deployment completed successfully.',
             ]);
         }, 200, [
             'Content-Type' => 'text/event-stream',
